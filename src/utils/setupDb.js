@@ -2,6 +2,11 @@ const { query } = require('../config/database');
 const logger = require('../utils/logger');
 
 async function createTables() {
+  if (!process.env.DATABASE_URL) {
+    logger.info('DATABASE_URL not configured; skipping database setup');
+    return;
+  }
+
   try {
     // Test database connection first
     await query('SELECT 1');
