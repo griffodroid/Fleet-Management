@@ -3,6 +3,9 @@ const logger = require('../utils/logger');
 
 async function createTables() {
   try {
+    // Test database connection first
+    await query('SELECT 1');
+
     // Create vehicles table
     await query(`
       CREATE TABLE IF NOT EXISTS vehicles (
@@ -66,13 +69,9 @@ async function createTables() {
 
     logger.info('Database tables created successfully');
   } catch (error) {
-    logger.error('Error creating tables', { error: error.message });
-    // Don't throw, allow app to start without DB for Railway deployment
-    if (process.env.NODE_ENV === 'production') {
-      logger.warn('Continuing without database setup - ensure Railway provides DATABASE_URL');
-    } else {
-      throw error;
-    }
+    logger.error('Database setup failed', { error: error.message, stack: error.stack });
+    // Always continue - Railway will provide services later
+    logger.warn('Continuing without database setup - services may not be ready yet');
   }
 }
 
