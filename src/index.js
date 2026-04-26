@@ -10,9 +10,14 @@ if (redis && redis.status !== 'connecting' && redis.connected) {
   require('./workers/gpsWorker');
   require('./workers/alertWorker');
   require('./workers/notificationWorker');
-  console.log('Workers initialized successfully');
+  logger.info('Workers initialized successfully');
 } else {
-  console.log('Redis not available, skipping worker initialization');
+  // This is expected during startup before Redis is available
+  if (process.env.NODE_ENV === 'production') {
+    logger.info('Workers will be initialized when Redis becomes available');
+  } else {
+    logger.info('Redis not available, skipping worker initialization');
+  }
 }
 
 // Make wsManager available globally for workers

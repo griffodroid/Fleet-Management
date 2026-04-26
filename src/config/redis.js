@@ -2,36 +2,50 @@ const Redis = require('ioredis');
 require('dotenv').config();
 
 let redis = null;
+const redisUrl = process.env.REDIS_URL || (process.env.NODE_ENV !== 'production' ? 'redis://127.0.0.1:6379' : null);
 
-try {
-  redis = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
-    retryStrategy: (times) => {
-      const delay = Math.min(times * 50, 2000);
-      return delay;
-    },
-    maxRetriesPerRequest: null,
-    enableReadyCheck: false,
-    lazyConnect: true, // Don't connect immediately
-  });
+if (redisUrl) {
+  try {
+    redis = new Redis(redisUrl, {
+      retryStrategy: (times) => {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      },
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      lazyConnect: true, // Don't connect immediately
+    });
 
-  redis.on('error', (err) => {
-    console.error('Redis connection error:', err.message);
-  });
+    redis.on('error', (err) => {
+      if (!err || !err.message) return;
+      if (!err.message.includes('ECONNREFUSED') && !err.message.includes('connect')) {
+        console.error('Redis error:', err.message);
+      }
+    });
 
-  redis.on('connect', () => {
-    console.log('Redis connected successfully');
-  });
+    redis.on('connect', () => {
+      console.log('[Redis] Connected');
+    });
 
-  redis.on('ready', () => {
-    console.log('Redis is ready to receive commands');
-  });
-} catch (error) {
-  console.error('Failed to initialize Redis client:', error.message);
-  // Create a dummy client that doesn't throw errors
+    redis.on('ready', () => {
+      console.log('[Redis] Ready');
+    });
+  } catch (error) {
+    console.error('Failed to initialize Redis client:', error.message);
+    redis = {
+      on: () => {},
+      emit: () => {},
+      connected: false,
+      status: 'end',
+    };
+  }
+} else {
+  console.info('[Redis] No REDIS_URL configured; Redis client disabled');
   redis = {
     on: () => {},
     emit: () => {},
     connected: false,
+    status: 'end',
   };
 }
 
