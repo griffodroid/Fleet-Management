@@ -97,3 +97,13 @@
 {"level":"info","message":"Workers initialized successfully","service":"fleet-management","timestamp":"2026-04-28T11:19:48.994Z"}
 {"level":"info","message":"Server running on port 5000","service":"fleet-management","timestamp":"2026-04-28T11:19:48.995Z"}
 {"level":"info","message":"User registered: admin@test.com","service":"fleet-management","timestamp":"2026-04-28T11:28:22.832Z"}
+{"error":"","level":"error","message":"Database setup failed","service":"fleet-management","stack":"AggregateError [ECONNREFUSED]: \n    at /workspaces/Fleet-Management/node_modules/pg-pool/index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async createTables (/workspaces/Fleet-Management/src/utils/setupDb.js:12:5)\n    at async startServer (/workspaces/Fleet-Management/src/index.js:31:5)\n    at async main (/workspaces/Fleet-Management/src/index.js:95:3)","timestamp":"2026-04-28T13:29:37.214Z"}
+{"level":"warn","message":"Continuing without database setup - services may not be ready yet","service":"fleet-management","timestamp":"2026-04-28T13:29:37.216Z"}
+{"level":"info","message":"Worker initialization skipped because Redis is disabled.","service":"fleet-management","timestamp":"2026-04-28T13:29:37.217Z"}
+{"level":"info","message":"Server running on port 5000","service":"fleet-management","timestamp":"2026-04-28T13:29:37.218Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully","service":"fleet-management","timestamp":"2026-04-28T13:29:44.867Z"}
+{"error":"","level":"error","message":"Database setup failed","service":"fleet-management","stack":"AggregateError [ECONNREFUSED]: \n    at /workspaces/Fleet-Management/node_modules/pg-pool/index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async createTables (/workspaces/Fleet-Management/src/utils/setupDb.js:12:5)\n    at async startServer (/workspaces/Fleet-Management/src/index.js:31:5)\n    at async main (/workspaces/Fleet-Management/src/index.js:95:3)","timestamp":"2026-04-28T13:38:55.652Z"}
+{"level":"warn","message":"Continuing without database setup - services may not be ready yet","service":"fleet-management","timestamp":"2026-04-28T13:38:55.654Z"}
+{"level":"info","message":"Worker initialization skipped because Redis is disabled.","service":"fleet-management","timestamp":"2026-04-28T13:38:55.655Z"}
+{"level":"info","message":"Server running on port 5000","service":"fleet-management","timestamp":"2026-04-28T13:38:55.656Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully","service":"fleet-management","timestamp":"2026-04-28T13:39:05.050Z"}
