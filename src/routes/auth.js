@@ -1,39 +1,78 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 const db = require('../config/database');
 const logger = require('../utils/logger');
 
 const router = express.Router();
 
-// 🚨 AUTHENTICATION BYPASSED FOR DEVELOPMENT 🚨
-// All auth routes return success without validation
-// TODO: Re-enable proper authentication later
-
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret";
 
-// REGISTER - TEMPORARILY BYPASSED FOR DEVELOPMENT
+// REGISTER
 router.post("/register", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  // TEMPORARY BYPASS - Always return success
-  console.log("🔓 AUTH BYPASSED - Register attempt:", email);
-  res.json({
-    message: "User created (bypassed)",
-    user: { id: Date.now(), email: email || "dev@example.com" }
-  });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    // Create user
+    const user = await User.create({ email, password });
+
+    // Generate JWT
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.status(201).json({
+      message: 'User created successfully',
+      token,
+      user: user.toJSON()
+    });
+  } catch (error) {
+    logger.error('Registration error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
-// LOGIN - TEMPORARILY BYPASSED FOR DEVELOPMENT
+// LOGIN
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  // TEMPORARY BYPASS - Always return success
-  console.log("🔓 AUTH BYPASSED - Login attempt:", email);
-  res.json({
-    token: "dev-bypass-token",
-    user: { id: 1, email: email || "dev@example.com" }
-  });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find user
+    const user = await User.findByEmail(email);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check password
+    const isValidPassword = await user.comparePassword(password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate JWT
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.json({
+      token,
+      user: user.toJSON()
+    });
+  } catch (error) {
+    logger.error('Login error', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 module.exports = router;

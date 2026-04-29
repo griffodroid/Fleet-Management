@@ -2,7 +2,7 @@ const Joi = require('joi');
 
 // GPS data validation schema
 const gpsDataSchema = Joi.object({
-  vehicle_id: Joi.string().required(),
+  vehicle_id: Joi.number().integer().positive().required(),
   lat: Joi.number().min(-90).max(90).required(),
   lng: Joi.number().min(-180).max(180).required(),
   speed: Joi.number().min(0).required(),
@@ -20,14 +20,10 @@ const vehicleSchema = Joi.object({
 // Convoy validation schema
 const convoySchema = Joi.object({
   name: Joi.string().required(),
-  start_point: Joi.object({
-    lat: Joi.number().min(-90).max(90).required(),
-    lng: Joi.number().min(-180).max(180).required()
-  }).required(),
-  end_point: Joi.object({
-    lat: Joi.number().min(-90).max(90).required(),
-    lng: Joi.number().min(-180).max(180).required()
-  }).required(),
+  start_point_lat: Joi.number().min(-90).max(90).required(),
+  start_point_lng: Joi.number().min(-180).max(180).required(),
+  end_point_lat: Joi.number().min(-90).max(90).required(),
+  end_point_lng: Joi.number().min(-180).max(180).required(),
   risk_level: Joi.string().valid('low', 'medium', 'high').optional()
 });
 

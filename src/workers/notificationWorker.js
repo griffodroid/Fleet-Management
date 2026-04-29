@@ -22,30 +22,30 @@ const createNotificationWorker = (redisConnection) => {
     const { vehicle_id, type, message, severity } = job.data;
 
     try {
-    logger.info('Sending notification', { vehicle_id, type, severity });
+      logger.info('Sending notification', { vehicle_id, type, severity });
 
-    if (transporter) {
-      // Send email
-      const mailOptions = {
-        from: config.SMTP_FROM,
-        to: 'admin@fleetmanagement.com', // TODO: Get actual email from user or config
-        subject: `Fleet Alert: ${type.toUpperCase()} - Vehicle ${vehicle_id}`,
-        text: message,
-        html: `<p><strong>Alert Type:</strong> ${type}</p>
-               <p><strong>Vehicle ID:</strong> ${vehicle_id}</p>
-               <p><strong>Severity:</strong> ${severity}</p>
-               <p><strong>Message:</strong> ${message}</p>`,
-      };
+      if (transporter) {
+        // Send email
+        const mailOptions = {
+          from: config.SMTP_FROM,
+          to: 'admin@fleetmanagement.com', // TODO: Get actual email from user or config
+          subject: `Fleet Alert: ${type.toUpperCase()} - Vehicle ${vehicle_id}`,
+          text: message,
+          html: `<p><strong>Alert Type:</strong> ${type}</p>
+                 <p><strong>Vehicle ID:</strong> ${vehicle_id}</p>
+                 <p><strong>Severity:</strong> ${severity}</p>
+                 <p><strong>Message:</strong> ${message}</p>`,
+        };
 
-      await transporter.sendMail(mailOptions);
-      logger.info('Email notification sent successfully', { vehicle_id, type });
-    } else {
-      logger.warn('SMTP not configured, skipping email notification', { vehicle_id, type });
+        await transporter.sendMail(mailOptions);
+        logger.info('Email notification sent successfully', { vehicle_id, type });
+      } else {
+        logger.warn('SMTP not configured, skipping email notification', { vehicle_id, type });
+      }
+    } catch (error) {
+      logger.error('Error sending notification', { error: error.message, vehicle_id });
+      throw error;
     }
-  } catch (error) {
-    logger.error('Error sending notification', { error: error.message, vehicle_id });
-    throw error;
-  }
 }, {
   connection: redisConnection
 });

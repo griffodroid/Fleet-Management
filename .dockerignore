@@ -12,4 +12,4 @@ coverage
 .cache
 .DS_Store
 *.log
-logs/
+logs/grep -r "import.meta.env" src

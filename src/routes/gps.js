@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { gpsQueue } = require('../config/queue');
+const queue = require('../config/queue');
 const { gpsDataSchema } = require('../utils/validators');
 const logger = require('../utils/logger');
 
@@ -14,10 +14,15 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
+    if (!queue.gpsQueue) {
+      logger.error('GPS Queue not initialized');
+      return res.status(503).json({ error: 'GPS service not available' });
+    }
+
     const { vehicle_id, lat, lng, speed, timestamp } = value;
 
     // Add job to queue
-    await gpsQueue.add('process-gps', {
+    await queue.gpsQueue.add('process-gps', {
       vehicle_id,
       lat,
       lng,

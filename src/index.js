@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { server, wsManager } = require('./app');
 const config = require('./config');
-const { createTables } = require('./utils/setupDb');
+const { createTables, ensureDefaultUser } = require('./utils/setupDb');
 const logger = require('./utils/logger');
 const redisModule = require('./config/redis');
 
@@ -22,13 +22,20 @@ async function startServer() {
     const redisConnection = await redisModule.waitForRedis();
 
     if (!redisConnection) {
-      console.warn('⚠️ Redis not initialized. Skipping queue and worker startup.');
+      if (redisModule.disabled) {
+        console.warn('⚠️ Redis disabled via DISABLE_REDIS=true. Skipping queue and worker startup.');
+      } else if (!redisModule.redisUrl) {
+        console.warn('⚠️ REDIS_URL is not configured. Skipping queue and worker startup.');
+      } else {
+        console.warn(`⚠️ Redis failed to initialize using REDIS_URL=${redisModule.redisUrl}. Skipping queue and worker startup.`);
+      }
     } else {
       console.log('✅ Redis connected and ready');
     }
 
     // Try to create database tables (will skip gracefully if DB not available)
     await createTables();
+    await ensureDefaultUser('griffinonyari@gmail.com', 'GriffinDEV');
 
     server.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);

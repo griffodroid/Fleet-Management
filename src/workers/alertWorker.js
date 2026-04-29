@@ -8,40 +8,40 @@ const createAlertWorker = (redisConnection) => {
     const { vehicle_id, type, message, severity } = job.data;
 
     try {
-    logger.info('Creating alert', { vehicle_id, type, severity });
+      logger.info('Creating alert', { vehicle_id, type, severity });
 
-    // Store alert in database
-    const result = await query(
-      'INSERT INTO alerts (vehicle_id, type, message, severity) VALUES ($1, $2, $3, $4) RETURNING id',
-      [vehicle_id, type, message, severity]
-    );
-    const alertId = result.rows[0].id;
+      // Store alert in database
+      const result = await query(
+        'INSERT INTO alerts (vehicle_id, type, message, severity) VALUES ($1, $2, $3, $4) RETURNING id',
+        [vehicle_id, type, message, severity]
+      );
+      const alertId = result.rows[0].id;
 
-    // Send notification (email, etc.)
-    await queue.notificationQueue.add('send-notification', {
-      vehicle_id,
-      type,
-      message,
-      severity
-    });
-
-    // Broadcast alert via WebSocket
-    if (global.wsManager) {
-      global.wsManager.broadcast({
-        type: 'alert',
-        alert_id: alertId,
+      // Send notification (email, etc.)
+      await queue.notificationQueue.add('send-notification', {
         vehicle_id,
-        alert_type: type,
+        type,
         message,
         severity
       });
-    }
 
-    logger.info('Alert created successfully', { vehicle_id, type });
-  } catch (error) {
-    logger.error('Error creating alert', { error: error.message, vehicle_id });
-    throw error;
-  }
+      // Broadcast alert via WebSocket
+      if (global.wsManager) {
+        global.wsManager.broadcast({
+          type: 'alert',
+          alert_id: alertId,
+          vehicle_id,
+          alert_type: type,
+          message,
+          severity
+        });
+      }
+
+      logger.info('Alert created successfully', { vehicle_id, type });
+    } catch (error) {
+      logger.error('Error creating alert', { error: error.message, vehicle_id });
+      throw error;
+    }
 }, {
   connection: redisConnection
 });

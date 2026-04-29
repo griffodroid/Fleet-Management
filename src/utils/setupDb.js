@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const { query } = require('../config/database');
 const logger = require('../utils/logger');
 
@@ -91,4 +92,29 @@ async function createTables() {
   }
 }
 
-module.exports = { createTables };
+async function ensureDefaultUser(email, password) {
+  if (!process.env.DATABASE_URL) {
+    logger.info('DATABASE_URL not configured; skipping default user seed');
+    return;
+  }
+
+  try {
+    const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
+      logger.info('Default user already exists', { email });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await query(
+      'INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id',
+      [email, hashedPassword]
+    );
+
+    logger.info('Default user seeded', { email, id: result.rows[0].id });
+  } catch (error) {
+    logger.error('Default user seed failed', { error: error.message, email });
+  }
+}
+
+module.exports = { createTables, ensureDefaultUser };

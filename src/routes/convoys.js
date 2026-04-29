@@ -38,10 +38,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { name, start_point, end_point, risk_level } = value;
+    const { name, start_point_lat, start_point_lng, end_point_lat, end_point_lng, risk_level } = value;
     const result = await query(
       'INSERT INTO convoys (name, start_point_lat, start_point_lng, end_point_lat, end_point_lng, risk_level) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [name, start_point.lat, start_point.lng, end_point.lat, end_point.lng, risk_level || 'medium']
+      [name, start_point_lat, start_point_lng, end_point_lat, end_point_lng, risk_level || 'medium']
     );
 
     logger.info('Convoy created', { id: result.rows[0].id, name });
@@ -56,11 +56,11 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, start_point, end_point, risk_level, status } = req.body;
+    const { name, start_point_lat, start_point_lng, end_point_lat, end_point_lng, risk_level, status } = req.body;
 
     const result = await query(
       'UPDATE convoys SET name = $1, start_point_lat = $2, start_point_lng = $3, end_point_lat = $4, end_point_lng = $5, risk_level = $6, status = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8 RETURNING *',
-      [name, start_point?.lat, start_point?.lng, end_point?.lat, end_point?.lng, risk_level, status, id]
+      [name, start_point_lat, start_point_lng, end_point_lat, end_point_lng, risk_level, status, id]
     );
 
     if (result.rows.length === 0) {

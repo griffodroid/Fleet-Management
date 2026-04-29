@@ -74,11 +74,9 @@ const initializeQueues = (redisConnection) => {
   return { gpsQueue, alertQueue, notificationQueue, gpsScheduler, alertScheduler, notificationScheduler };
 };
 
-module.exports = { initializeQueues, get gpsQueue() { return gpsQueue; }, get alertQueue() { return alertQueue; }, get notificationQueue() { return notificationQueue; } };
-
 module.exports = {
-  gpsQueue,
-  alertQueue,
-  notificationQueue,
   initializeQueues,
+  get gpsQueue() { return gpsQueue; },
+  get alertQueue() { return alertQueue; },
+  get notificationQueue() { return notificationQueue; }
 };
