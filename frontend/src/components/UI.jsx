@@ -263,7 +263,7 @@ export const Toast = ({ message, type = 'info', onClose }) => {
   );
 };
 
-export const LoadingState = ({ />} => (
+export const LoadingState = ({} => (
   <div className="flex flex-col items-center justify-center py-12">
     <Spinner size="lg" className="mb-4" />
     <p className="text-slate-400">Loading...</p>
