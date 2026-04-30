@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Layout, Card, Button, Input, Modal, Spinner, LoadingState, EmptyState, Pagination, Badge } from '../components/UI';
+import { Layout } from './../components/Layout';
+import { Card, Button, Input, Modal, Spinner, LoadingState, EmptyState, Pagination, Badge } from '../components/UI';
 import { useVehicleStore } from '../store';
 import { vehicleService } from '../services/api';
 import { Plus, Edit2, Trash2, Eye, Filter } from 'lucide-react';

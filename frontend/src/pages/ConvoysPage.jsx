@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Card, Button, Spinner, LoadingState, EmptyState, Badge, Modal, Input, Textarea } from '../components/UI';
+import { Layout } from './../components/Layout';
+import { Card, Button, Spinner, LoadingState, EmptyState, Badge, Modal, Input, Textarea } from '../components/UI';
 import { useConvoyStore } from '../store';
 import { convoyService } from '../services/api';
 import { Plus, MapPin, Users, AlertCircle } from 'lucide-react';

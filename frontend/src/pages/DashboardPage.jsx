@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Card, Button, Spinner, LoadingState, EmptyState } from '../components/UI';
+import { Layout } from './../components/Layout';
+import { Card, Button, Spinner, LoadingState, EmptyState } from '../components/UI';
 import { useConvoyStore, useVehicleStore, useAlertStore } from '../store';
 import { convoyService, vehicleService, alertService } from '../services/api';
 import {
