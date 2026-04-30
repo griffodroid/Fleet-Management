@@ -1,33 +1,12 @@
-# Use Node.js 20 Alpine for smaller image
 FROM node:20-alpine
-
-# Set working directory
 WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
+COPY backend/package*.json ./
 RUN npm ci --only=production
-
-# Copy source code
-COPY src/ ./src/
-COPY index.js ./
-
-# Create non-root user
+COPY backend/src/ ./src/
+COPY backend/scripts/ ./scripts/
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
-
-# Change ownership
 RUN chown -R nodejs:nodejs /app
 USER nodejs
-
-# Expose port
 EXPOSE 5000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f "http://localhost:${PORT:-5000}/" || exit 1
-
-# Start the application
-CMD ["npm", "start"]
+CMD ["node", "src/app.js"]
