@@ -1,4 +1,4 @@
-# 🚀 Fleet & Convoy Management System
+#  Fleet & Convoy Management System
 
 **Military-grade tactical operations platform** for real-time fleet coordination and security convoy management across regions like Kenya, DRC, Tanzania, and Mali.
 
@@ -7,9 +7,9 @@
 ![React](https://img.shields.io/badge/react-18-blue)
 ![License](https://img.shields.io/badge/license-ISC-blue)
 
-## ⚡ Quick Deploy to Production
+##  Quick Deploy to Production
 
-### 🚂 Railway (Easiest - 5 minutes)
+###  Railway (Easiest - 5 minutes)
 
 ```bash
 # 1. Go to railway.app
@@ -32,7 +32,7 @@ JWT_SECRET=<generate: openssl rand -base64 32>
 FRONTEND_URL=https://your-frontend-domain.com
 ```
 
-### 🌐 Vercel (Frontend) + Railway (Backend)
+###  Vercel (Frontend) + Railway (Backend)
 
 ```bash
 # Frontend on Vercel
@@ -43,7 +43,7 @@ VITE_API_URL=https://your-railway-backend.railway.app/api/v1
 VITE_SOCKET_URL=https://your-railway-backend.railway.app
 ```
 
-## 🎯 Features
+##  Features
 
 ### Core Capabilities
 - ✅ **Real-Time Tracking**: Live GPS tracking with Socket.IO
@@ -65,7 +65,7 @@ VITE_SOCKET_URL=https://your-railway-backend.railway.app
 | Deploy | Docker + Railway/Vercel + Cloud databases |
 | Security | Helmet, CORS, Rate-Limit, SQL-parameterized |
 
-## 📦 Project Structure
+##  Project Structure
 
 ```
 Fleet-Management/
@@ -249,7 +249,7 @@ socket.on('message:new', (data) => {
 });
 ```
 
-## 🧙 Database Schema
+##  Database Schema
 
 **Core Tables:**
 - `users` - User accounts with roles (admin, dispatcher, operator, analyst)
@@ -264,7 +264,7 @@ socket.on('message:new', (data) => {
 
 All tables include: `id`, `created_at`, `updated_at`, `deleted_at` (soft deletes).
 
-## 🔐 Security Features
+##  Security Features
 
 - **JWT Authentication**: Tokens in httpOnly cookies (configurable)
 - **Role-Based Authorization**: Admin, Dispatcher, Operator, Analyst
@@ -278,7 +278,7 @@ All tables include: `id`, `created_at`, `updated_at`, `deleted_at` (soft deletes
 - **Request Validation**: Joi schema validation on all inputs
 - **No Secrets in Code**: All env-based configuration
 
-## 📊 Deployment Platforms
+## Deployment Platforms
 
 ### Railway (Recommended)
 - ✅ Built-in PostgreSQL & Redis
@@ -318,7 +318,7 @@ VITE_API_URL=https://your-backend.com/api/v1
 VITE_SOCKET_URL=https://your-backend.com
 ```
 
-## 📝 Example: Create a Convoy
+##  Example: Create a Convoy
 
 ```bash
 curl -X POST http://localhost:5000/api/v1/convoys \
@@ -345,7 +345,7 @@ Response:
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ```bash
 # Run API test script
@@ -359,7 +359,7 @@ curl http://localhost:5000/api/v1/vehicles?page=1&limit=20 \
 curl http://localhost:5000/health
 ```
 
-## 🔄 Background Workers
+##  Background Workers
 
 **BullMQ processes run separately:**
 
@@ -373,7 +373,7 @@ npm run worker:alert        # Alert processing
 npm run worker:notification # Email/SMS notifications
 ```
 
-## 📚 File Structure Deep Dive
+##  File Structure Deep Dive
 
 ### Frontend
 ```
@@ -438,7 +438,7 @@ backend/src/
     └── logger.js              # Winston logger
 ```
 
-## 🚀 Production Checklist
+##  Production Checklist
 
 Before deploying:
 
@@ -455,7 +455,7 @@ Before deploying:
 - [ ] Load test convoy updates
 - [ ] Document API for team
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 **"Database connection failed"**
 ```bash
@@ -484,22 +484,22 @@ socket.on('connect_error', (error) => console.error(error));
 Authorization: Bearer eyJhbGc...
 ```
 
-## 📞 Support
+##  Support
 
 - Issues: [GitHub Issues](https://github.com/OnyariDEV/Fleet-Management/issues)
 - Discussions: [GitHub Discussions](https://github.com/OnyariDEV/Fleet-Management/discussions)
 
-## 📄 License
+##  License
 
 ISC - Use freely in personal and commercial projects.
 
-## 👨‍💻 Author
+##  Author
 
 **OnyariDEV** - Fullstack engineer specializing in real-time systems
 
 ---
 
-## ⭐ Next Steps to Go Live
+##  Next Steps to Go Live
 
 1. **Deploy Backend to Railway** (5 min)
    - Connect GitHub
