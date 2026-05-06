@@ -1,13 +1,8 @@
 {
-  "buildCommand": "cd backend && npm install",
-  "installCommand": "npm install",
-  "framework": "express",
-  "outputDirectory": "backend/dist",
-  "env": {
-    "DATABASE_URL": "@DATABASE_URL",
-    "REDIS_URL": "@REDIS_URL",
-    "JWT_SECRET": "@JWT_SECRET",
-    "NODE_ENV": "production",
-    "FRONTEND_URL": "@FRONTEND_URL"
+  "build": {
+    "builder": "nixpacks"
+  },
+  "deploy": {
+    "startCommand": "node backend/src/app.js"
   }
 }
