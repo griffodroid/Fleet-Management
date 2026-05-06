@@ -16,6 +16,7 @@ const messagesRoutes = require('./routes/messages');
 const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet());
