@@ -1,4 +1,4 @@
 {
-  "buildCommand": "cd backend && npm install",
-  "startCommand": "node backend/src/app.js"
+  "buildCommand": "npm install",
+  "startCommand": "node src/app.js"
 }
