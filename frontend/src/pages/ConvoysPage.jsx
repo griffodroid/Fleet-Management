@@ -1,193 +1,148 @@
-import React, { useEffect, useState } from 'react';
-import { Layout } from './../components/Layout';
-import { Card, Button, Spinner, LoadingState, EmptyState, Badge, Modal, Input, Textarea } from '../components/UI';
-import { useConvoyStore } from '../store';
-import { convoyService } from '../services/api';
-import { Plus, MapPin, Users, AlertCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { useForm } from 'react-hook-form';
+import { useState, useEffect } from "react";
+import { useConvoyStore } from "../store/index.js";
 
-const statusBadges = {
-  planned: 'default',
-  active: 'active',
-  completed: 'completed',
-  archived: 'idle',
-};
+const PRIO_COLORS = { critical:"#ef4444", high:"#f59e0b", medium:"#3b82f6", low:"#22c55e" };
+const STATUS_COLORS = { active:"#22c55e", planned:"#3b82f6", completed:"#475569", archived:"#334155" };
 
-export const ConvoysPage = () => {
-  const { convoys, loading, setConvoys, setLoading } = useConvoyStore();
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState('all');
+export default function ConvoysPage() {
+  const { convoys, fetchConvoys, loading } = useConvoyStore();
+  const [selected, setSelected] = useState(null);
+  const [filter, setFilter] = useState("all");
 
-  useEffect(() => {
-    loadConvoys();
-  }, []);
+  useEffect(() => { fetchConvoys?.(); }, []);
 
-  const loadConvoys = async () => {
-    try {
-      setLoading(true);
-      const response = await convoyService.getAll(1, 100);
-      setConvoys(response.data.data || []);
-    } catch (error) {
-      toast.error('Failed to load convoys');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredConvoys = selectedStatus === 'all'
-    ? convoys
-    : convoys.filter(c => c.status === selectedStatus);
-
-  const statuses = ['planned', 'active', 'completed', 'archived'];
+  const filtered = (convoys || []).filter(c => filter === "all" || c.status === filter);
+  const sel = selected ? convoys?.find(c => c.id === selected) : null;
 
   return (
-    <Layout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold font-rajdhani text-amber-400">Convoy Operations</h1>
-            <p className="text-slate-400">Manage and track active missions</p>
+    <div style={{ display:"grid", gridTemplateColumns: sel ? "1fr 380px" : "1fr", gap:20, height:"calc(100vh - 120px)" }}>
+      {/* List */}
+      <div>
+        <div style={{ marginBottom:24 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:4 }}>
+            <div style={{ width:3, height:24, background:"#f59e0b", borderRadius:2 }}/>
+            <h1 style={{ fontSize:20, fontWeight:700, letterSpacing:4, color:"#e2e8f0", margin:0 }}>CONVOY OPS</h1>
           </div>
-          <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4" />
-            Create Convoy
-          </Button>
+          <div style={{ fontSize:10, color:"#334155", letterSpacing:3, paddingLeft:15 }}>{filtered.length} OPERATIONS</div>
         </div>
 
-        {/* Status Pipeline */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {statuses.map((status) => {
-            const count = convoys.filter(c => c.status === status).length;
+        <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+          {["all","active","planned","completed"].map(s => (
+            <button key={s} onClick={() => setFilter(s)} style={{
+              padding:"8px 14px", borderRadius:6, border:"1px solid",
+              borderColor: filter === s ? "#f59e0b" : "#1a2744",
+              background: filter === s ? "rgba(245,158,11,0.12)" : "rgba(10,15,30,0.9)",
+              color: filter === s ? "#f59e0b" : "#475569",
+              fontFamily:"'IBM Plex Mono', monospace", fontSize:10, letterSpacing:2, cursor:"pointer",
+            }}>{s.toUpperCase()}</button>
+          ))}
+        </div>
+
+        <div style={{ display:"flex", flexDirection:"column", gap:10, overflowY:"auto", maxHeight:"calc(100vh - 240px)" }}>
+          {loading ? (
+            <div style={{ color:"#334155", textAlign:"center", padding:60, letterSpacing:3, fontSize:11 }}>LOADING...</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ color:"#334155", textAlign:"center", padding:60, letterSpacing:3, fontSize:11 }}>NO OPERATIONS</div>
+          ) : filtered.map((c, i) => {
+            const sc = STATUS_COLORS[c.status] || "#475569";
+            const pc = PRIO_COLORS[c.priority] || "#475569";
+            const isSelected = selected === c.id;
             return (
-              <button
-                key={status}
-                onClick={() => setSelectedStatus(status)}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  selectedStatus === status
-                    ? 'border-amber-500 bg-amber-500/10'
-                    : 'border-slate-700 hover:border-slate-600'
-                }`}
-              >
-                <p className="text-sm text-slate-400 capitalize">{status}</p>
-                <p className="text-2xl font-bold font-rajdhani text-amber-400">{count}</p>
-              </button>
+              <div key={c.id || i} onClick={() => setSelected(isSelected ? null : c.id)} style={{
+                background: isSelected ? "rgba(245,158,11,0.06)" : "rgba(10,15,30,0.9)",
+                border: isSelected ? "1px solid #f59e0b44" : "1px solid #1a2744",
+                borderRadius:8, padding:"16px 20px", cursor:"pointer",
+                transition:"all 0.15s",
+              }}
+              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor="#2d3f6e"; }}
+              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor="#1a2744"; }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <span style={{ fontSize:14, fontWeight:700, color:"#e2e8f0", letterSpacing:2 }}>{c.name}</span>
+                    <span style={{ fontSize:9, padding:"2px 8px", borderRadius:3, background:`${pc}22`, color:pc, letterSpacing:1 }}>
+                      {(c.priority || "MED").toUpperCase()}
+                    </span>
+                  </div>
+                  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                    <span style={{ width:6, height:6, borderRadius:"50%", background:sc, boxShadow:`0 0 6px ${sc}` }}/>
+                    <span style={{ fontSize:9, color:sc, letterSpacing:2 }}>{(c.status || "?").toUpperCase()}</span>
+                  </div>
+                </div>
+
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, marginBottom:12 }}>
+                  {[
+                    { label:"VEHICLES", value: c.vehicle_count || 0 },
+                    { label:"REGION", value: c.region || "—" },
+                    { label:"INCIDENTS", value: c.incidents || 0 },
+                  ].map(d => (
+                    <div key={d.label}>
+                      <div style={{ fontSize:8, color:"#334155", letterSpacing:2 }}>{d.label}</div>
+                      <div style={{ fontSize:12, color:"#94a3b8", marginTop:2 }}>{d.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{ flex:1, height:4, background:"#0f1729", borderRadius:2 }}>
+                    <div style={{ width:`${c.completion_pct || 0}%`, height:"100%", borderRadius:2,
+                      background:"linear-gradient(90deg, #f59e0b, #fbbf24)", transition:"width 0.5s ease" }}/>
+                  </div>
+                  <span style={{ fontSize:10, color:"#64748b", minWidth:32 }}>{c.completion_pct || 0}%</span>
+                </div>
+              </div>
             );
           })}
-          <button
-            onClick={() => setSelectedStatus('all')}
-            className={`p-4 rounded-lg border-2 transition-all ${
-              selectedStatus === 'all'
-                ? 'border-blue-500 bg-blue-500/10'
-                : 'border-slate-700 hover:border-slate-600'
-            }`}
-          >
-            <p className="text-sm text-slate-400">Total</p>
-            <p className="text-2xl font-bold font-rajdhani text-blue-400">{convoys.length}</p>
-          </button>
         </div>
+      </div>
 
-        {/* Convoys List */}
-        {loading ? (
-          <LoadingState />
-        ) : filteredConvoys.length === 0 ? (
-          <EmptyState
-            icon={MapPin}
-            title="No Convoys"
-            description={`No ${selectedStatus} convoys at this time`}
-            action={<Button onClick={() => setShowCreateModal(true)}>Create Convoy</Button>}
-          />
-        ) : (
-          <div className="grid gap-4">
-            {filteredConvoys.map((convoy) => (
-              <Card key={convoy.id} className="hover:border-amber-500 transition-all">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-bold font-rajdhani text-amber-400">{convoy.name}</h3>
-                      <Badge variant={statusBadges[convoy.status]}>
-                        {convoy.status}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <p className="text-slate-500">Region</p>
-                        <p className="text-slate-200">{convoy.region}</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500">Vehicles</p>
-                        <p className="text-slate-200">{convoy.vehicleCount || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500">Priority</p>
-                        <p className="text-slate-200 capitalize">{convoy.priority}</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500">Departure</p>
-                        <p className="text-slate-200">{new Date(convoy.departureTime).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    {convoy.description && (
-                      <p className="mt-3 text-slate-400 text-sm">{convoy.description}</p>
-                    )}
-                  </div>
-                  <Button variant="ghost" size="sm" className="ml-4">
-                    View
-                  </Button>
-                </div>
-              </Card>
+      {/* Detail panel */}
+      {sel && (
+        <div style={{
+          background:"rgba(10,15,30,0.95)", border:"1px solid #1a2744",
+          borderRadius:8, padding:24, overflowY:"auto",
+          animation:"slideIn 0.2s ease",
+        }}>
+          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:20 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:"#f59e0b", letterSpacing:3 }}>OP DETAIL</div>
+            <button onClick={() => setSelected(null)} style={{
+              background:"none", border:"none", color:"#475569", cursor:"pointer", fontSize:16,
+            }}>✕</button>
+          </div>
+
+          <div style={{ fontSize:18, fontWeight:700, color:"#e2e8f0", letterSpacing:2, marginBottom:4 }}>{sel.name}</div>
+          <div style={{ fontSize:10, color:"#475569", marginBottom:20 }}>{sel.description || "No description"}</div>
+
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
+            {[
+              { label:"STATUS", value: (sel.status||"?").toUpperCase(), color: STATUS_COLORS[sel.status] },
+              { label:"PRIORITY", value: (sel.priority||"?").toUpperCase(), color: PRIO_COLORS[sel.priority] },
+              { label:"VEHICLES", value: sel.vehicle_count || 0 },
+              { label:"INCIDENTS", value: sel.incidents || 0 },
+              { label:"DISTANCE", value: sel.distance ? `${sel.distance} km` : "—" },
+              { label:"RISK", value: (sel.risk_level||"—").toUpperCase() },
+            ].map(d => (
+              <div key={d.label} style={{ padding:"12px 16px", background:"rgba(15,23,42,0.8)", borderRadius:6 }}>
+                <div style={{ fontSize:9, color:"#334155", letterSpacing:2, marginBottom:4 }}>{d.label}</div>
+                <div style={{ fontSize:14, fontWeight:600, color: d.color || "#94a3b8" }}>{d.value}</div>
+              </div>
             ))}
           </div>
-        )}
 
-        {/* Create Modal */}
-        <CreateConvoyModal
-          isOpen={showCreateModal}
-          onClose={() => {
-            setShowCreateModal(false);
-            loadConvoys();
-          }}
-        />
-      </div>
-    </Layout>
-  );
-};
-
-const CreateConvoyModal = ({ isOpen, onClose }) => {
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
-
-  const onSubmit = async (data) => {
-    try {
-      await convoyService.create(data);
-      toast.success('Convoy created');
-      reset();
-      onClose();
-    } catch (error) {
-      toast.error('Failed to create convoy');
-    }
-  };
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create Convoy" size="lg">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input label="Mission Name" {...register('name')} required />
-        <Input label="Region" {...register('region')} required />
-        <select className="input" {...register('priority')}>
-          <option value="low">Low Priority</option>
-          <option value="medium">Medium Priority</option>
-          <option value="high">High Priority</option>
-          <option value="critical">Critical Priority</option>
-        </select>
-        <Textarea label="Description" {...register('description')} />
-        <Input label="Departure Time" type="datetime-local" {...register('departureTime')} />
-        <div className="flex gap-2 justify-end pt-4">
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? <Spinner size="sm" /> : 'Create Convoy'}
-          </Button>
+          <div style={{ marginBottom:12 }}>
+            <div style={{ fontSize:9, color:"#334155", letterSpacing:2, marginBottom:8 }}>MISSION PROGRESS</div>
+            <div style={{ height:8, background:"#0f1729", borderRadius:4, overflow:"hidden" }}>
+              <div style={{ width:`${sel.completion_pct||0}%`, height:"100%",
+                background:"linear-gradient(90deg, #f59e0b, #fbbf24)",
+                boxShadow:"0 0 10px #f59e0b88", transition:"width 0.5s" }}/>
+            </div>
+            <div style={{ textAlign:"right", fontSize:11, color:"#64748b", marginTop:6 }}>{sel.completion_pct||0}%</div>
+          </div>
         </div>
-      </form>
-    </Modal>
+      )}
+
+      <style>{`
+        @keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+      `}</style>
+    </div>
   );
-};
+}

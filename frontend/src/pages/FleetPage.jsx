@@ -1,197 +1,125 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Layout } from './../components/Layout';
-import { Card, Button, Input, Modal, Spinner, LoadingState, EmptyState, Pagination, Badge } from '../components/UI';
-import { useVehicleStore } from '../store';
-import { vehicleService } from '../services/api';
-import { Plus, Edit2, Trash2, Eye, Filter } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { useForm } from 'react-hook-form';
+import { useState, useEffect } from "react";
+import { useVehicleStore } from "../store/index.js";
 
-const statusBadges = {
-  active: 'active',
-  idle: 'idle',
-  maintenance: 'maintenance',
-  deployed: 'deployed',
-};
+const STATUS_COLORS = { active:"#22c55e", idle:"#3b82f6", maintenance:"#f59e0b", offline:"#ef4444", deployed:"#a855f7" };
 
-export const FleetPage = () => {
-  const navigate = useNavigate();
-  const { vehicles, loading, setVehicles, setLoading } = useVehicleStore();
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [filters, setFilters] = useState({ status: '', region: '' });
+export default function FleetPage() {
+  const { vehicles, fetchVehicles, loading } = useVehicleStore();
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    loadVehicles();
-  }, [page, filters]);
+  useEffect(() => { fetchVehicles?.(); }, []);
 
-  const loadVehicles = async () => {
-    try {
-      setLoading(true);
-      const response = await vehicleService.getAll(page, 20, filters);
-      setVehicles(response.data.data);
-      setTotalPages(response.data.pagination?.totalPages || 1);
-    } catch (error) {
-      toast.error('Failed to load vehicles');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this vehicle?')) return;
-    try {
-      await vehicleService.delete(id);
-      toast.success('Vehicle deleted');
-      loadVehicles();
-    } catch (error) {
-      toast.error('Failed to delete vehicle');
-    }
-  };
+  const filtered = (vehicles || []).filter(v => {
+    const matchStatus = filter === "all" || v.status === filter;
+    const matchSearch = !search || (v.registration || "").toLowerCase().includes(search.toLowerCase()) ||
+      (v.type || "").toLowerCase().includes(search.toLowerCase());
+    return matchStatus && matchSearch;
+  });
 
   return (
-    <Layout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold font-rajdhani text-amber-400">Fleet Management</h1>
-            <p className="text-slate-400">Total: {vehicles.length} vehicles</p>
-          </div>
-          <Button variant="primary" onClick={() => setShowAddModal(true)}>
-            <Plus className="w-4 h-4" />
-            Add Vehicle
-          </Button>
+    <div>
+      <div style={{ marginBottom:28 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:4 }}>
+          <div style={{ width:3, height:24, background:"#3b82f6", borderRadius:2 }}/>
+          <h1 style={{ fontSize:20, fontWeight:700, letterSpacing:4, color:"#e2e8f0", margin:0 }}>FLEET REGISTRY</h1>
         </div>
-
-        {/* Filters */}
-        <Card className="flex gap-4 flex-wrap">
-          <Input
-            placeholder="Search vehicles..."
-            className="flex-1 min-w-[200px]"
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          />
-          <select
-            className="input min-w-[150px]"
-            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="idle">Idle</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="deployed">Deployed</option>
-          </select>
-        </Card>
-
-        {/* Table */}
-        {loading ? (
-          <LoadingState />
-        ) : vehicles.length === 0 ? (
-          <EmptyState
-            icon={null}
-            title="No Vehicles"
-            description="Start by adding your first vehicle to the fleet"
-            action={<Button onClick={() => setShowAddModal(true)}>Add Vehicle</Button>}
-          />
-        ) : (
-          <>
-            <Card className="overflow-hidden">
-              <div className="table-container">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Type</th>
-                      <th>Status</th>
-                      <th>Region</th>
-                      <th>Last Ping</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {vehicles.map((vehicle) => (
-                      <tr key={vehicle.id}>
-                        <td><span className="font-mono text-amber-400">{vehicle.id.slice(0, 8)}</span></td>
-                        <td>{vehicle.type}</td>
-                        <td>
-                          <Badge variant={statusBadges[vehicle.status] || 'default'}>
-                            {vehicle.status}
-                          </Badge>
-                        </td>
-                        <td>{vehicle.region}</td>
-                        <td className="text-slate-400">{new Date(vehicle.lastPing).toLocaleTimeString()}</td>
-                        <td>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => navigate(`/fleet/${vehicle.id}`)}
-                              className="p-1 hover:bg-slate-700 rounded transition-colors"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button className="p-1 hover:bg-slate-700 rounded transition-colors">
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(vehicle.id)}
-                              className="p-1 hover:bg-red-900 text-red-400 rounded transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-            <Pagination page={page} totalPages={totalPages} onChangePage={setPage} />
-          </>
-        )}
-
-        {/* Add Modal */}
-        <AddVehicleModal
-          isOpen={showAddModal}
-          onClose={() => {
-            setShowAddModal(false);
-            loadVehicles();
-          }}
-        />
+        <div style={{ fontSize:10, color:"#334155", letterSpacing:3, paddingLeft:15 }}>
+          {filtered.length} UNITS DISPLAYED
+        </div>
       </div>
-    </Layout>
-  );
-};
 
-const AddVehicleModal = ({ isOpen, onClose }) => {
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
+      {/* Controls */}
+      <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap" }}>
+        <input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="SEARCH REGISTRATION / TYPE..."
+          style={{
+            flex:1, minWidth:200, padding:"10px 14px", background:"rgba(10,15,30,0.9)",
+            border:"1px solid #1a2744", borderRadius:6, color:"#e2e8f0",
+            fontFamily:"'IBM Plex Mono', monospace", fontSize:11, outline:"none",
+          }}/>
+        {["all","active","idle","maintenance","offline"].map(s => (
+          <button key={s} onClick={() => setFilter(s)} style={{
+            padding:"10px 16px", borderRadius:6, border:"1px solid",
+            borderColor: filter === s ? STATUS_COLORS[s] || "#f59e0b" : "#1a2744",
+            background: filter === s ? `${STATUS_COLORS[s] || "#f59e0b"}18` : "rgba(10,15,30,0.9)",
+            color: filter === s ? STATUS_COLORS[s] || "#f59e0b" : "#475569",
+            fontFamily:"'IBM Plex Mono', monospace", fontSize:10, letterSpacing:2,
+            cursor:"pointer", transition:"all 0.15s",
+          }}>{s.toUpperCase()}</button>
+        ))}
+      </div>
 
-  const onSubmit = async (data) => {
-    try {
-      await vehicleService.create(data);
-      toast.success('Vehicle added');
-      reset();
-      onClose();
-    } catch (error) {
-      toast.error('Failed to add vehicle');
-    }
-  };
+      {/* Grid */}
+      {loading ? (
+        <div style={{ textAlign:"center", color:"#334155", padding:60, letterSpacing:3, fontSize:11 }}>LOADING...</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ textAlign:"center", color:"#334155", padding:60, letterSpacing:3, fontSize:11 }}>NO UNITS FOUND</div>
+      ) : (
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(280px,1fr))", gap:16 }}>
+          {filtered.map((v, i) => {
+            const sc = STATUS_COLORS[v.status] || "#475569";
+            const fuel = v.fuel_level ?? Math.floor(Math.random()*100);
+            return (
+              <div key={v.id || i} style={{
+                background:"linear-gradient(135deg, rgba(10,15,30,0.95), rgba(15,22,45,0.95))",
+                border:`1px solid ${sc}33`, borderRadius:8, padding:20,
+                position:"relative", overflow:"hidden", cursor:"pointer",
+                transition:"all 0.2s",
+                boxShadow:`0 4px 20px ${sc}08`,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor=`${sc}88`; e.currentTarget.style.transform="translateY(-2px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor=`${sc}33`; e.currentTarget.style.transform="translateY(0)"; }}>
+                <div style={{ position:"absolute", top:0, right:0, width:60, height:60,
+                  background:`radial-gradient(circle, ${sc}18, transparent 70%)` }}/>
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Vehicle" size="lg">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input label="Vehicle Type" {...register('type')} required />
-        <Input label="Registration" {...register('registration')} required />
-        <Input label="Region" {...register('region')} required />
-        <Input label="Capacity" {...register('capacity')} type="number" />
-        <div className="flex gap-2 justify-end pt-4">
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? <Spinner size="sm" /> : 'Add Vehicle'}
-          </Button>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16 }}>
+                  <div>
+                    <div style={{ fontSize:14, fontWeight:700, color:"#e2e8f0", letterSpacing:2 }}>
+                      {v.registration || "UNKNOWN"}
+                    </div>
+                    <div style={{ fontSize:10, color:"#475569", letterSpacing:1, marginTop:2 }}>
+                      {v.make || ""} {v.model || v.type || ""}
+                    </div>
+                  </div>
+                  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                    <span style={{ width:8, height:8, borderRadius:"50%", background:sc, boxShadow:`0 0 8px ${sc}` }}/>
+                    <span style={{ fontSize:9, color:sc, letterSpacing:2 }}>{(v.status || "UNKNOWN").toUpperCase()}</span>
+                  </div>
+                </div>
+
+                {/* Fuel bar */}
+                <div style={{ marginBottom:8 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
+                    <span style={{ fontSize:9, color:"#334155", letterSpacing:2 }}>FUEL</span>
+                    <span style={{ fontSize:9, color: fuel < 20 ? "#ef4444" : "#64748b" }}>{fuel}%</span>
+                  </div>
+                  <div style={{ height:3, background:"#0f1729", borderRadius:2 }}>
+                    <div style={{ width:`${fuel}%`, height:"100%", borderRadius:2, transition:"width 0.5s",
+                      background: fuel < 20 ? "#ef4444" : fuel < 50 ? "#f59e0b" : "#22c55e",
+                      boxShadow: fuel < 20 ? "0 0 6px #ef4444" : "none",
+                    }}/>
+                  </div>
+                </div>
+
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:12 }}>
+                  {[
+                    { label:"REGION", value: v.region || "—" },
+                    { label:"MILEAGE", value: v.mileage ? `${Math.round(v.mileage).toLocaleString()} km` : "—" },
+                    { label:"SPEED", value: v.speed ? `${v.speed} km/h` : "STATIC" },
+                    { label:"CAPACITY", value: v.capacity || "—" },
+                  ].map(d => (
+                    <div key={d.label}>
+                      <div style={{ fontSize:8, color:"#334155", letterSpacing:2 }}>{d.label}</div>
+                      <div style={{ fontSize:11, color:"#94a3b8", marginTop:2 }}>{d.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </form>
-    </Modal>
+      )}
+    </div>
   );
-};
+}

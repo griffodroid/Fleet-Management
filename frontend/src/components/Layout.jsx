@@ -1,181 +1,132 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import {
-  Menu,
-  X,
-  BarChart3,
-  Users,
-  Truck,
-  AlertCircle,
-  MessageSquare,
-  LogOut,
-  Settings,
-  Bell,
-} from 'lucide-react';
-import { useAuthStore, useUIStore, useAlertStore } from '../store';
-import { Button } from './UI';
-import clsx from 'clsx';
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/index.js";
 
-const navItems = [
-  { icon: BarChart3, label: 'Dashboard', path: '/dashboard', roles: ['*'] },
-  { icon: Truck, label: 'Fleet', path: '/fleet', roles: ['*'] },
-  { icon: Users, label: 'Convoys', path: '/convoys', roles: ['*'] },
-  { icon: AlertCircle, label: 'Alerts', path: '/alerts', roles: ['*'] },
-  { icon: MessageSquare, label: 'Messages', path: '/messages', roles: ['*'] },
-  { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['admin', 'dispatcher'] },
-  { icon: Settings, label: 'Settings', path: '/settings', roles: ['admin'] },
+const NAV = [
+  { path: "/dashboard", label: "SITREP", icon: "⬡", roles: ["admin","operator","viewer"] },
+  { path: "/fleet",     label: "FLEET",  icon: "◈", roles: ["admin","operator"] },
+  { path: "/convoys",   label: "CONVOY", icon: "◆", roles: ["admin","operator"] },
+  { path: "/settings",  label: "CONFIG", icon: "⚙", roles: ["admin"] },
 ];
 
-export const Sidebar = () => {
-  const { sidebarOpen, toggleSidebar } = useUIStore();
+export default function Layout({ children }) {
+  const [collapsed, setCollapsed] = useState(false);
   const { user, logout } = useAuthStore();
-  const location = useLocation();
+  const navigate = useNavigate();
 
-  const canAccessItem = (roles) => {
-    if (roles.includes('*')) return true;
-    return roles.includes(user?.role);
-  };
+  const handleLogout = () => { logout(); navigate("/login"); };
+  const role = user?.role || "viewer";
 
   return (
-    <>
-      {/* Mobile toggle */}
-      <button
-        onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-2 bg-slate-800 rounded-lg md:hidden"
-      >
-        {sidebarOpen ? <X /> : <Menu />}
-      </button>
+    <div style={{ display:"flex", height:"100vh", background:"#050810", color:"#e2e8f0", fontFamily:"'IBM Plex Mono', monospace", overflow:"hidden" }}>
 
       {/* Sidebar */}
-      <div
-        className={clsx(
-          'sidebar transition-all duration-300',
-          !sidebarOpen && 'translate-x-full md:translate-x-0'
-        )}
-      >
-        {/* Header */}
-        <div className="p-4 border-b border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center font-bold text-slate-950">
-              ⚔️
-            </div>
-            {sidebarOpen && (
+      <aside style={{
+        width: collapsed ? 64 : 220,
+        background: "linear-gradient(180deg, #0a0f1e 0%, #050810 100%)",
+        borderRight: "1px solid #1a2744",
+        display:"flex", flexDirection:"column",
+        transition: "width 0.2s ease",
+        flexShrink: 0,
+        position:"relative",
+        zIndex: 10,
+      }}>
+        {/* Logo */}
+        <div style={{ padding:"24px 16px 20px", borderBottom:"1px solid #1a2744" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+            <div style={{
+              width:36, height:36, background:"linear-gradient(135deg, #f59e0b, #d97706)",
+              clipPath:"polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:16, fontWeight:900, color:"#000", flexShrink:0,
+            }}>C</div>
+            {!collapsed && (
               <div>
-                <h1 className="font-rajdhani font-bold text-amber-400">CONVOY</h1>
-                <p className="text-xs text-slate-500">Command & Control</p>
+                <div style={{ fontSize:15, fontWeight:700, letterSpacing:4, color:"#f59e0b" }}>CONVOY</div>
+                <div style={{ fontSize:9, color:"#475569", letterSpacing:2 }}>COMMAND & CONTROL</div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 py-6 px-3">
-          {navItems.map((item) => {
-            if (!canAccessItem(item.roles)) return null;
-
-            const isActive = location.pathname.startsWith(item.path);
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={clsx(
-                  'sidebar-item group mb-2',
-                  isActive && 'active'
-                )}
-              >
-                <Icon className="w-5 h-5" />
-                {sidebarOpen && <span className="flex-1">{item.label}</span>}
-                {isActive && sidebarOpen && (
-                  <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
-                )}
-              </Link>
-            );
-          })}
+        {/* Nav */}
+        <nav style={{ flex:1, padding:"16px 8px", display:"flex", flexDirection:"column", gap:4 }}>
+          {NAV.filter(n => n.roles.includes(role)).map(item => (
+            <NavLink key={item.path} to={item.path} style={({ isActive }) => ({
+              display:"flex", alignItems:"center", gap:12, padding:"10px 12px",
+              borderRadius:6, textDecoration:"none", transition:"all 0.15s",
+              background: isActive ? "rgba(245,158,11,0.12)" : "transparent",
+              color: isActive ? "#f59e0b" : "#64748b",
+              borderLeft: isActive ? "2px solid #f59e0b" : "2px solid transparent",
+              fontSize:11, fontWeight:600, letterSpacing:3,
+            })}>
+              <span style={{ fontSize:16, flexShrink:0 }}>{item.icon}</span>
+              {!collapsed && item.label}
+            </NavLink>
+          ))}
         </nav>
 
-        {/* User Section */}
-        <div className="border-t border-slate-700 p-3">
-          {sidebarOpen && (
-            <div className="mb-4">
-              <p className="text-xs text-slate-400">Signed in as</p>
-              <p className="text-sm font-medium text-slate-100">{user?.name}</p>
-              <p className="text-xs text-amber-400 capitalize">{user?.role}</p>
+        {/* User */}
+        <div style={{ padding:"16px 12px", borderTop:"1px solid #1a2744" }}>
+          {!collapsed && (
+            <div style={{ marginBottom:8, fontSize:10, color:"#475569", letterSpacing:2 }}>
+              {user?.email || "OPERATOR"}
             </div>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-center"
-            onClick={logout}
-          >
-            <LogOut className="w-4 h-4" />
-            {sidebarOpen && 'Logout'}
-          </Button>
-        </div>
-      </div>
-    </>
-  );
-};
-
-export const Header = () => {
-  const { user } = useAuthStore();
-  const { unreadCount } = useAlertStore();
-
-  return (
-    <header className="scanner-header bg-slate-900 border-b border-slate-700 sticky top-0 z-30">
-      <div className="px-6 py-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold font-rajdhani text-amber-400">
-            Fleet Operations
-          </h2>
-          <p className="text-sm text-slate-400">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </p>
+          <button onClick={handleLogout} style={{
+            width:"100%", padding:"8px 12px", background:"rgba(239,68,68,0.1)",
+            border:"1px solid rgba(239,68,68,0.3)", borderRadius:6,
+            color:"#ef4444", fontSize:10, letterSpacing:2, cursor:"pointer",
+            fontFamily:"inherit", transition:"all 0.15s",
+          }}
+          onMouseEnter={e => e.target.style.background="rgba(239,68,68,0.2)"}
+          onMouseLeave={e => e.target.style.background="rgba(239,68,68,0.1)"}
+          >{collapsed ? "⏻" : "LOGOUT"}</button>
         </div>
 
-        <div className="flex items-center gap-4">
-          {unreadCount > 0 && (
-            <div className="relative">
-              <Bell className="w-6 h-6 text-slate-400 cursor-pointer hover:text-amber-400" />
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {unreadCount}
-              </span>
+        {/* Collapse toggle */}
+        <button onClick={() => setCollapsed(!collapsed)} style={{
+          position:"absolute", top:"50%", right:-12, transform:"translateY(-50%)",
+          width:24, height:24, background:"#1a2744", border:"1px solid #2d3f6e",
+          borderRadius:"50%", color:"#64748b", cursor:"pointer", fontSize:10,
+          display:"flex", alignItems:"center", justifyContent:"center",
+        }}>{collapsed ? "›" : "‹"}</button>
+      </aside>
+
+      {/* Main */}
+      <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+        {/* Topbar */}
+        <header style={{
+          height:52, background:"rgba(10,15,30,0.95)",
+          borderBottom:"1px solid #1a2744",
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+          padding:"0 24px", flexShrink:0,
+          backdropFilter:"blur(8px)",
+        }}>
+          <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+            <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+              <span style={{ width:6, height:6, borderRadius:"50%", background:"#22c55e", boxShadow:"0 0 6px #22c55e" }}/>
+              <span style={{ fontSize:10, color:"#22c55e", letterSpacing:2 }}>LIVE</span>
             </div>
-          )}
-
-          <div className="text-right">
-            <p className="text-sm font-medium text-slate-100">{user?.name}</p>
-            <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
+            <span style={{ fontSize:10, color:"#334155", letterSpacing:1 }}>|</span>
+            <span style={{ fontSize:10, color:"#475569", letterSpacing:2 }}>SYS NOMINAL</span>
           </div>
-        </div>
-      </div>
-    </header>
-  );
-};
-
-export const Layout = ({ children }) => {
-  const { sidebarOpen } = useUIStore();
-
-  return (
-    <div className="flex h-screen bg-slate-950">
-      <Sidebar />
-      <div className={clsx('flex-1 flex flex-col transition-all duration-300', sidebarOpen ? 'md:ml-0' : '')}>
-        <Header />
-        <main className="flex-1 overflow-auto">
-          <div className="p-6 max-w-full">
-            {children}
+          <div style={{ fontSize:10, color:"#334155", letterSpacing:2 }}>
+            {new Date().toUTCString().toUpperCase()}
           </div>
+        </header>
+
+        {/* Content */}
+        <main style={{ flex:1, overflow:"auto", padding:24, position:"relative" }}>
+          {/* Grid overlay effect */}
+          <div style={{
+            position:"fixed", inset:0, pointerEvents:"none", zIndex:0,
+            backgroundImage:"linear-gradient(rgba(26,39,68,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(26,39,68,0.3) 1px, transparent 1px)",
+            backgroundSize:"40px 40px",
+          }}/>
+          <div style={{ position:"relative", zIndex:1 }}>{children}</div>
         </main>
       </div>
     </div>
   );
-};
+}

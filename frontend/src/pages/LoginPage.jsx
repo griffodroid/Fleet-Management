@@ -1,112 +1,133 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useAuthStore } from '../store';
-import { authService } from '../services/api';
-import { Button, Input, Alert, Spinner } from '../components/UI';
-import { Lock, Mail } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/index.js";
+import api from "../services/api.js";
 
-const loginSchema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-export const LoginPage = () => {
-  const navigate = useNavigate();
+export default function LoginPage() {
+  const [email, setEmail] = useState("admin@convoy.local");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const { setAuthState } = useAuthStore();
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
-    resolver: zodResolver(loginSchema),
-  });
+  const navigate = useNavigate();
 
-  const onSubmit = async (data) => {
+  const handleLogin = async () => {
+    if (!email || !password) { setError("CREDENTIALS REQUIRED"); return; }
+    setLoading(true); setError("");
     try {
-      const response = await authService.login(data.email, data.password);
-      const { user, token } = response.data;
-
+      const res = await api.post("/auth/login", { email, password });
+      const { token, user } = res.data;
       setAuthState(user, token);
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      toast.success('Login successful');
-      navigate('/dashboard');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed');
-    }
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.error || "AUTHENTICATION FAILED");
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      {/* Animated background */}
-      <div className="fixed inset-0 opacity-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-slate-950 to-red-500" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500 rounded-full filter blur-3xl opacity-20" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-red-500 rounded-full filter blur-3xl opacity-20" />
-      </div>
+    <div style={{
+      minHeight:"100vh", background:"#050810",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      fontFamily:"'IBM Plex Mono', monospace",
+      position:"relative", overflow:"hidden",
+    }}>
+      {/* Grid bg */}
+      <div style={{
+        position:"absolute", inset:0,
+        backgroundImage:"linear-gradient(rgba(26,39,68,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(26,39,68,0.4) 1px, transparent 1px)",
+        backgroundSize:"40px 40px",
+      }}/>
+      {/* Glow */}
+      <div style={{ position:"absolute", top:"30%", left:"50%", transform:"translate(-50%,-50%)",
+        width:600, height:600, background:"radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%)", pointerEvents:"none" }}/>
 
-      {/* Card */}
-      <div className="relative w-full max-w-md">
-        <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-8 space-y-6">
-          {/* Logo */}
-          <div className="flex justify-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-red-600 rounded-lg flex items-center justify-center text-2xl">
-              ⚔️
-            </div>
+      <div style={{ position:"relative", width:"100%", maxWidth:420, padding:24 }}>
+        {/* Logo */}
+        <div style={{ textAlign:"center", marginBottom:40 }}>
+          <div style={{
+            width:64, height:64, margin:"0 auto 16px",
+            background:"linear-gradient(135deg, #f59e0b, #d97706)",
+            clipPath:"polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:28, fontWeight:900, color:"#000",
+          }}>C</div>
+          <div style={{ fontSize:28, fontWeight:700, letterSpacing:8, color:"#f59e0b" }}>CONVOY</div>
+          <div style={{ fontSize:10, color:"#334155", letterSpacing:4, marginTop:4 }}>FLEET & CONVOY MANAGEMENT SYSTEM</div>
+        </div>
+
+        {/* Card */}
+        <div style={{
+          background:"rgba(10,15,30,0.95)", border:"1px solid #1a2744",
+          borderRadius:12, padding:32, backdropFilter:"blur(10px)",
+          boxShadow:"0 20px 60px rgba(0,0,0,0.5)",
+        }}>
+          <div style={{ fontSize:10, color:"#334155", letterSpacing:3, marginBottom:24, textAlign:"center" }}>
+            AUTHENTICATE TO PROCEED
           </div>
 
-          {/* Title */}
-          <div className="text-center">
-            <h1 className="text-3xl font-bold font-rajdhani text-amber-400 mb-2">
-              CONVOY
-            </h1>
-            <p className="text-slate-400">Fleet & Convoy Management System</p>
-          </div>
+          {error && (
+            <div style={{
+              padding:"10px 14px", background:"rgba(239,68,68,0.1)",
+              border:"1px solid rgba(239,68,68,0.3)", borderRadius:6,
+              color:"#ef4444", fontSize:11, letterSpacing:1, marginBottom:16, textAlign:"center",
+            }}>{error}</div>
+          )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Input
-              {...register('email')}
-              type="email"
-              placeholder="Email address"
-              error={errors.email?.message}
-              icon={<Mail />}
+          <div style={{ marginBottom:16 }}>
+            <div style={{ fontSize:9, color:"#334155", letterSpacing:3, marginBottom:8 }}>EMAIL</div>
+            <input value={email} onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleLogin()}
+              style={{
+                width:"100%", padding:"12px 14px", background:"rgba(15,23,42,0.8)",
+                border:"1px solid #1a2744", borderRadius:6, color:"#e2e8f0",
+                fontFamily:"'IBM Plex Mono', monospace", fontSize:12, outline:"none",
+                boxSizing:"border-box", transition:"border-color 0.15s",
+              }}
+              onFocus={e => e.target.style.borderColor="#f59e0b44"}
+              onBlur={e => e.target.style.borderColor="#1a2744"}
             />
-
-            <Input
-              {...register('password')}
-              type="password"
-              placeholder="Password"
-              error={errors.password?.message}
-              icon={<Lock />}
-            />
-
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <Spinner size="sm" /> : 'Sign In'}
-            </Button>
-          </form>
-
-          {/* Demo credentials */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-            <p className="text-xs text-slate-400 mb-2 font-mono">Demo Credentials:</p>
-            <div className="space-y-1 text-xs font-mono text-slate-300">
-              <p>👤 admin@convoy.local</p>
-              <p>🔑 password123</p>
-            </div>
           </div>
 
-          {/* Footer */}
-          <p className="text-center text-xs text-slate-500">
-            Secure military-grade operations center
-          </p>
+          <div style={{ marginBottom:24 }}>
+            <div style={{ fontSize:9, color:"#334155", letterSpacing:3, marginBottom:8 }}>PASSWORD</div>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleLogin()}
+              style={{
+                width:"100%", padding:"12px 14px", background:"rgba(15,23,42,0.8)",
+                border:"1px solid #1a2744", borderRadius:6, color:"#e2e8f0",
+                fontFamily:"'IBM Plex Mono', monospace", fontSize:12, outline:"none",
+                boxSizing:"border-box", transition:"border-color 0.15s",
+              }}
+              onFocus={e => e.target.style.borderColor="#f59e0b44"}
+              onBlur={e => e.target.style.borderColor="#1a2744"}
+            />
+          </div>
+
+          <button onClick={handleLogin} disabled={loading} style={{
+            width:"100%", padding:"14px", borderRadius:6, border:"none",
+            background: loading ? "#1a2744" : "linear-gradient(135deg, #f59e0b, #d97706)",
+            color: loading ? "#475569" : "#000",
+            fontFamily:"'IBM Plex Mono', monospace", fontSize:12, fontWeight:700,
+            letterSpacing:4, cursor: loading ? "not-allowed" : "pointer",
+            transition:"all 0.15s",
+          }}>
+            {loading ? "AUTHENTICATING..." : "SIGN IN"}
+          </button>
+
+          <div style={{ marginTop:20, padding:"12px 16px", background:"rgba(15,23,42,0.5)",
+            borderRadius:6, border:"1px solid #0f1729" }}>
+            <div style={{ fontSize:9, color:"#334155", letterSpacing:2, marginBottom:6 }}>DEMO ACCESS</div>
+            <div style={{ fontSize:10, color:"#475569" }}>admin@convoy.local</div>
+            <div style={{ fontSize:10, color:"#475569" }}>password123</div>
+          </div>
+        </div>
+
+        <div style={{ textAlign:"center", marginTop:20, fontSize:9, color:"#1a2744", letterSpacing:2 }}>
+          SECURE MILITARY-GRADE OPERATIONS CENTER
         </div>
       </div>
+
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap');`}</style>
     </div>
   );
-};
+}
