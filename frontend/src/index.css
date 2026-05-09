@@ -1,9 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap');
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body, #root { height: 100%; }
-body { background: #050810; color: #e2e8f0; font-family: 'IBM Plex Mono', monospace; }
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: #050810; }
-::-webkit-scrollbar-thumb { background: #1a2744; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #2d3f6e; }
-* { scrollbar-width: thin; scrollbar-color: #1a2744 #050810; }
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap");
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%}
+body{background:#050810;color:#e2e8f0;font-family:"IBM Plex Mono",monospace}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#050810}
+::-webkit-scrollbar-thumb{background:#1a2744;border-radius:2px}
